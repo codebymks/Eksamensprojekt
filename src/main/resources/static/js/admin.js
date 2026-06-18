@@ -35,13 +35,12 @@ function loadAlerts() {
         });
 }
 
-//Shows one alert's epicenter/magnitude/status, the sensor readings behind it, its actions and its report count.
+//Shows one alert's epicenter/magnitude/status, the sensor readings behind it, its actions and its citizen reports.
 function showAlertDetails(alertId) {
     const alert = currentAlerts.find(a => a.id === Number(alertId));
     if (!alert) return;
 
-    document.getElementById("no-alert-selected").style.display = "none";
-    document.getElementById("alert-details-content").style.display = "block";
+    document.getElementById("alert-details-dialog").showModal();
 
     document.getElementById("detail-epicenter").textContent = `${alert.epicenterLatitude}, ${alert.epicenterLongitude}`;
     document.getElementById("detail-magnitude").textContent = alert.estimatedMagnitude;
@@ -52,8 +51,15 @@ function showAlertDetails(alertId) {
         .join(" ");
     document.getElementById("detail-actions").innerHTML = buttons || "No actions available.";
 
-    document.getElementById("detail-reports").innerHTML =
-        `${alert.reportCount} <button class="view-reports" data-id="${alert.id}">View</button>`;
+    fetch(`/api/alerts/${alertId}/reports`, {
+        headers: {"Authorization": sessionStorage.getItem("authHeader")}
+    })
+        .then(response => response.json())
+        .then(reports => {
+            document.getElementById("detail-reports").innerHTML = reports.length === 0
+                ? "No reports yet."
+                : reports.map(report => `<div>Report #${report.id}: intensity ${report.intensity}</div>`).join("");
+        });
 
     fetch(`/api/alerts/${alertId}/readings`, {
         headers: {"Authorization": sessionStorage.getItem("authHeader")}
@@ -74,30 +80,10 @@ function showAlertDetails(alertId) {
         });
 }
 
-//Fetches the citizen reports for one alert and shows the dialog popup.
-function showReports(alertId) {
-    fetch(`/api/alerts/${alertId}/reports`, {
-        headers: {"Authorization": sessionStorage.getItem("authHeader")}
-    })
-        .then(response => response.json())
-        .then(reports => {
-            const content = document.getElementById("reports-dialog-content");
-            content.innerHTML = reports.length === 0
-                ? "No reports yet."
-                : reports.map(report => `<div>Report #${report.id}: intensity ${report.intensity}</div>`).join("");
-            document.getElementById("reports-dialog").showModal();
-        });
-}
-
-//Handles clicks anywhere on the page: viewing an alert's details, viewing its reports, or changing its status.
+//Handles clicks anywhere on the page: viewing an alert's details or ch anging its status.
 document.addEventListener("click", event => {
     if (event.target.classList.contains("show-details")) {
         showAlertDetails(event.target.dataset.id);
-        return;
-    }
-
-    if (event.target.classList.contains("view-reports")) {
-        showReports(event.target.dataset.id);
         return;
     }
 

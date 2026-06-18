@@ -7,9 +7,24 @@
 </head>
 <body>
 
-<h2>Alert Details</h2>
-<p id="no-alert-selected">Select an alert below to see its details.</p>
-<div id="alert-details-content" style="display:none;">
+<h1>All Alerts</h1>
+<table id="alerts-table">
+    <thead>
+    <tr>
+        <th>Alert ID</th>
+        <th>Epicenter Latitude</th>
+        <th>Epicenter Longitude</th>
+        <th>Magnitude</th>
+        <th>Status</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody id="alerts-body">
+    </tbody>
+</table>
+
+<dialog id="alert-details-dialog">
+    <h2>Alert Details</h2>
     <p>
         <strong>Epicenter:</strong> <span id="detail-epicenter"></span><br>
         <strong>Magnitude:</strong> <span id="detail-magnitude"></span><br>
@@ -37,31 +52,12 @@
 
     <h3>Reports</h3>
     <p id="detail-reports"></p>
-</div>
 
-<h2>All Alerts</h2>
-<table id="alerts-table">
-    <thead>
-    <tr>
-        <th>Alert ID</th>
-        <th>Epicenter Latitude</th>
-        <th>Epicenter Longitude</th>
-        <th>Magnitude</th>
-        <th>Status</th>
-        <th></th>
-    </tr>
-    </thead>
-    <tbody id="alerts-body">
-    </tbody>
-</table>
-
-<dialog id="reports-dialog">
-    <div id="reports-dialog-content"></div>
     <form method="dialog">
         <button>Close</button>
     </form>
 </dialog>
 
-<script src="../js/adminAlert.js"></script>
+<script src="../js/admin.js"></script>
 </body>
 </html>

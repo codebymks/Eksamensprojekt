@@ -2,27 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SeismicMonitor - Login</title>
+    <title>Login</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
+<h1>Earthquake Alert System</h1>
+<p>This system supports the monitoring of seismic activity across multiple high-risk areas. By combining measurements from several sensors, it identifies potential earthquakes and generates alerts with estimated location and magnitude.
+    Users can view active alerts and report experienced tremors, while administrators have access to detailed sensor data and can manage the status of alerts as needed.</p>
+<div class="login-box">
+    <h2>Login</h2>
 
-<h1>SeismicMonitor</h1>
-<h2>Login</h2>
+    <form id="login-form">
+        <p>
+            <label for="username">Username</label><br>
+            <input type="text" id="username" required>
+        </p>
+        <p>
+            <label for="password">Password</label><br>
+            <input type="password" id="password" required>
+        </p>
+        <button type="submit">Login</button>
+    </form>
 
-<form id="login-form">
-    <p>
-        <label for="username">Username</label><br>
-        <input type="text" id="username" required>
-    </p>
-    <p>
-        <label for="password">Password</label><br>
-        <input type="password" id="password" required>
-    </p>
-    <button type="submit">Login</button>
-</form>
-
-<p id="login-error"></p>
+    <p id="login-error"></p>
+</div>
 
 <script src="js/login.js"></script>
 </body>
