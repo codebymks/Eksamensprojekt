@@ -348,3 +348,5 @@ docker compose logs sensors # check simulated readings / connection errors
 ```
 
 App must run on `localhost:8080`.
+
+## Do not run shell command.
