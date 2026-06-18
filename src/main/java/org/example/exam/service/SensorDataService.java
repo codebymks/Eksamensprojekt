@@ -67,14 +67,14 @@ public class SensorDataService {
 
         for (SensorReadingDTO dto : readings) {
 
-            Sensor sensor = sensorRepository.findBySensorID(dto.sensorId())
-                    .orElseGet(() -> {
-                        Sensor newSensor = new Sensor();
-                        newSensor.setSensorID(dto.sensorId());
-                        newSensor.setLatitude(dto.sensorLocation().latitude());
-                        newSensor.setLongitude(dto.sensorLocation().longitude());
-                        return sensorRepository.save(newSensor);
-                    });
+            Sensor sensor = sensorRepository.findBySensorID(dto.sensorId()).orElse(null);
+            if (sensor == null) {
+                sensor = new Sensor();
+                sensor.setSensorID(dto.sensorId());
+                sensor.setLatitude(dto.sensorLocation().latitude());
+                sensor.setLongitude(dto.sensorLocation().longitude());
+                sensor = sensorRepository.save(sensor);
+            }
 
             SensorReading reading = new SensorReading();
             reading.setReadingId(dto.readingId());
@@ -97,11 +97,15 @@ public class SensorDataService {
     //Assignment 4
     //Estimates the epicenter and magnitude from exactly 3 readings, reverse-geocodes the epicenter into an area name, and creates an UNDER_REVIEW alert linked to them; if epicenter estimation fails, no alert is created.
     private void tryCreateAlert(List<SensorReading> threeReadings) {
-        List<EpicenterEstimator.LocationWithDistance> measurements = threeReadings.stream()
-                .map(r -> new EpicenterEstimator.LocationWithDistance(
-                        new EpicenterEstimator.Location(r.getSensor().getLatitude(), r.getSensor().getLongitude()),
-                        r.getEstimatedDistanceToEpicenterKm()))
-                .toList();
+        List<EpicenterEstimator.LocationWithDistance> measurements = new ArrayList<>();
+        List<Double> magnitudes = new ArrayList<>();
+        for (SensorReading reading : threeReadings) {
+            EpicenterEstimator.Location sensorLocation = new EpicenterEstimator.Location(
+                    reading.getSensor().getLatitude(), reading.getSensor().getLongitude());
+            measurements.add(new EpicenterEstimator.LocationWithDistance(
+                    sensorLocation, reading.getEstimatedDistanceToEpicenterKm()));
+            magnitudes.add(reading.getEstimatedMagnitude());
+        }
 
         EpicenterEstimator.Location epicenter;
         try {
@@ -110,8 +114,7 @@ public class SensorDataService {
             return;
         }
 
-        double magnitude = magnitudeEstimator.estimate(
-                threeReadings.stream().map(SensorReading::getEstimatedMagnitude).toList());
+        double magnitude = magnitudeEstimator.estimate(magnitudes);
 
         EarthquakeAlert alert = new EarthquakeAlert();
         alert.setEpicenterLatitude(epicenter.latitude());

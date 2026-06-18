@@ -25,14 +25,10 @@ public class GeocodingServiceImpl implements GeocodingService {
             Map<String, Object> response = restClient.get()
                     .uri("/reverse?format=json&lat={lat}&lon={lon}", latitude, longitude)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+                    .body(new ParameterizedTypeReference<>() {});
 
-            if (response == null) {
-                return null;
-            }
 
-            Object addressObj = response.get("address");
-            if (!(addressObj instanceof Map<?, ?> address)) {
+            if (response == null || !(response.get("address") instanceof Map<?, ?> address)) {
                 return null;
             }
 
