@@ -270,9 +270,9 @@ What the assignment actually requires (and nothing more): Spring Security with a
 | `PATCH /api/alerts/{id}/status` | `AlertController` | ADMIN |
 | `GET /api/alerts/{id}/readings` | `AlertController` | ADMIN |
 | `POST /api/alerts/{id}/reports` | `CitizenReportController` | USER |
-| `GET /api/alerts/{id}/reports` | `CitizenReportController` | ADMIN |
+| `GET /api/alerts/{id}/reports` | `CitizenReportController` | USER (and ADMIN) |
 
-Note the shared path `/api/alerts/{id}/reports`: `POST` is USER, `GET` is ADMIN, so the security rules must match on HTTP method, not just the path. Also permit the static frontend files (`index.html`, `html/admin.html`, the css/js) so the pages load.
+Note the shared path `/api/alerts/{id}/reports`: `POST` is USER, `GET` is open to both USER and ADMIN (USER needs it to show the report count per alert on the user page), so the security rules must match on HTTP method, not just the path. Also permit the static frontend files (`index.html`, `html/admin.html`, the css/js) so the pages load.
 
 ### Public endpoint
 
