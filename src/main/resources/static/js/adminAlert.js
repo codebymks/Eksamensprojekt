@@ -11,7 +11,9 @@ let currentAlerts = [];
 
 //Loads every alert from the backend and lists them with a button to view full details.
 function loadAlerts() {
-    return fetch("/api/alerts")
+    return fetch("/api/alerts", {
+        headers: {"Authorization": sessionStorage.getItem("authHeader")}
+    })
         .then(response => response.json())
         .then(alerts => {
             currentAlerts = alerts;
@@ -53,7 +55,9 @@ function showAlertDetails(alertId) {
     document.getElementById("detail-reports").innerHTML =
         `${alert.reportCount} <button class="view-reports" data-id="${alert.id}">View</button>`;
 
-    fetch(`/api/alerts/${alertId}/readings`)
+    fetch(`/api/alerts/${alertId}/readings`, {
+        headers: {"Authorization": sessionStorage.getItem("authHeader")}
+    })
         .then(response => response.json())
         .then(readings => {
             document.getElementById("readings-body").innerHTML = readings.map(reading => `
@@ -70,9 +74,11 @@ function showAlertDetails(alertId) {
         });
 }
 
-//Fetches the citizen reports for one alert and shows each one's intensity in a dialog popup.
+//Fetches the citizen reports for one alert and shows the dialog popup.
 function showReports(alertId) {
-    fetch(`/api/alerts/${alertId}/reports`)
+    fetch(`/api/alerts/${alertId}/reports`, {
+        headers: {"Authorization": sessionStorage.getItem("authHeader")}
+    })
         .then(response => response.json())
         .then(reports => {
             const content = document.getElementById("reports-dialog-content");
@@ -101,7 +107,10 @@ document.addEventListener("click", event => {
     const id = event.target.dataset.id;
     fetch(`/api/alerts/${id}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": sessionStorage.getItem("authHeader")
+        },
         body: JSON.stringify({ status })
     })
         .then(loadAlerts)

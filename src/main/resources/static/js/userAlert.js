@@ -1,5 +1,7 @@
  //Loads active earthquake alerts from the backend and lists them in the table.
-fetch("/api/alerts/active")
+fetch("/api/alerts/active", {
+    headers: {"Authorization": sessionStorage.getItem("authHeader")}
+})
     .then(response => response.json())
     .then(alerts => {
         const tableBody = document.getElementById("alerts-body");

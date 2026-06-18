@@ -18,6 +18,7 @@ import org.example.exam.enums.Role;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Login {
+    //Assignment 5
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

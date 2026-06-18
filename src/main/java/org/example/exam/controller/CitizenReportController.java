@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 //Assignment 3
-//Lets users submit a citizen report (felt intensity) for an existing earthquake alert.
+//Lets users submit a citizen report (intensity) for an existing earthquake alert.
 @RestController
 @RequestMapping("/api/alerts")
 public class CitizenReportController {

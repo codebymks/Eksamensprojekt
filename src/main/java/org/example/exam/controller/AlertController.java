@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+
 //Assignment 3
-//Exposes earthquake alerts for the frontend to read and (for admins) update.
+//Earthquake alerts for the frontend to read and (for admins) update.
 @RestController
 @RequestMapping("/api/alerts")
 public class AlertController {
@@ -26,13 +27,13 @@ public class AlertController {
         this.repository = repository;
     }
 
-    //Returns all alerts that are currently ACTIVE.
+    //Returns all alerts that are currently ACTIVE. Used for user page.
     @GetMapping("/active")
     public List<EarthquakeAlert> getActiveAlerts() {
         return repository.findByAlertStatus(AlertStatus.ACTIVE);
     }
 
-    //Returns every alert, regardless of status, for the admin page.
+    //Returns every alert, regardless of status, used for the admin page.
     @GetMapping
     public List<EarthquakeAlert> getAllAlerts() {
         return repository.findAll();
@@ -55,7 +56,7 @@ public class AlertController {
         return ResponseEntity.ok(alert);
     }
 
-    //Returns the exact sensor readings that led to this alert, for admin traceability.
+    //Returns the exact sensor readings that led to this alert, for admin.
     @GetMapping("/{id}/readings")
     public ResponseEntity<List<SensorReading>> getReadings(@PathVariable int id) {
         EarthquakeAlert alert = repository.findById(id).orElse(null);

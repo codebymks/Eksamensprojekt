@@ -16,7 +16,6 @@ import org.example.exam.enums.AlertStatus;
 
 import java.util.List;
 
-//An earthquake alert: the estimated epicenter/magnitude for a quake, plus the readings and reports linked to it.
 @Entity
 @Getter
 @Setter
@@ -36,8 +35,6 @@ public class EarthquakeAlert {
 
     private String area;
 
-    //Ignored when this alert is sent as JSON: SensorReading also links back to its alert,
-    //and serializing both directions at once would recurse forever.
     @JsonIgnore
     @OneToMany(mappedBy = "alert")
     private List<SensorReading> sensorReadings;

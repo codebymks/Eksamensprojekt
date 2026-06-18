@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 //Assignment 2
-//Estimates the overall magnitude as the simple average of the magnitudes reported by the sensors.
 @Service
 public class MagnitudeEstimatorImpl implements MagnitudeEstimator {
 

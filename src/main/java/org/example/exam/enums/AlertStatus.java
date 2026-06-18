@@ -1,6 +1,6 @@
 package org.example.exam.enums;
 
-//The status of an earthquake alert, and the rules for which status changes are allowed.
+//The status of an earthquake alert.
 public enum AlertStatus {
     UNDER_REVIEW,
     ACTIVE,

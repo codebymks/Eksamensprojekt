@@ -17,6 +17,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CitizenReport {
+    //Assignment 3
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

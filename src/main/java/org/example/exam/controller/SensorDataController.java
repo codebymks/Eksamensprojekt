@@ -21,14 +21,14 @@ public class SensorDataController {
 
     @PostMapping("/sensor-data")
     public ResponseEntity<Void> receive(@RequestBody List<SensorReadingDTO> readings) {
-        System.out.println("🚀RECEIVED DATA:"+ readings);
+        //System.out.println("🚀RECEIVED DATA:"+ readings);
         service.receive(readings);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/sensor-readings")
     public List<SensorReading> getReadings() {
-        System.out.println("Received readings!!!!!");
+        //System.out.println("Received readings!!!!!");
         return service.getAllReadings();
     }
 }

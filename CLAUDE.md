@@ -79,13 +79,9 @@ Allowed transitions (enforce in the alert update logic):
 - `ACTIVE → NOT_ACTIVE`
 - `FALSE_ALARM` and `NOT_ACTIVE` are final.
 
-### AppUser (delopgave 5 only)
-- `id` (PK)
-- `username`
-- `password` (hashed)
-- `role` (USER / ADMIN)
+### Users (delopgave 5 only)
 
-CRUD: Read for authentication. Seed one USER and one ADMIN at startup.
+No entity and no database table. The assignment does not require storing users, so two accounts — one USER and one ADMIN — are hardcoded directly in the security configuration (in-memory). Spring checks submitted credentials against them. The `Role` enum (`USER` / `ADMIN`) is the only model piece needed.
 
 ## Business rules
 
@@ -206,8 +202,8 @@ Done when: a request with three valid readings produces an `UNDER_REVIEW` alert 
    readings per alert; simple frontend.
 4. Reverse geocoding: `GeocodingService` interface + Nominatim impl, populate
    `area` when an alert is created.
-5. Security: AppUser + roles, secure endpoints (USER vs ADMIN), keep
-   `POST /api/sensor-data` public.
+5. Security: hardcoded in-memory USER + ADMIN, secure endpoints (USER vs
+   ADMIN), keep `POST /api/sensor-data` public.
 
 ## Delopgave 4 — Reverse geocoding
 
@@ -218,6 +214,7 @@ The system must be able to:
 - use an external API to look the area up
 - store the result on the alert (the `area` field that was empty until now)
 - allow the external provider to be swapped for another
+
 ### Look up the area
 
 When an alert's epicenter has been calculated, call an external reverse-geocoding API with the epicenter's latitude and longitude and read a place name from the response. The suggested provider is OpenStreetMap's Nominatim:
@@ -240,7 +237,75 @@ Delopgave 2 creates the alert with an epicenter and magnitude. Delopgave 4 exten
 
 - Nominatim has a usage policy: at most one request per second and an identifying User-Agent/Referer header on the request.
 - The call can fail or be slow. Handle it gracefully — for example leave `area` empty if the lookup fails rather than letting the whole alert creation fail.
-  Done when: a newly created alert has its `area` populated from the epicenter coordinates via the `GeocodingService` interface, and the provider can be swapped without changing the alert-creation code.
+
+Done when: a newly created alert has its `area` populated from the epicenter coordinates via the `GeocodingService` interface, and the provider can be swapped without changing the alert-creation code.
+
+## Delopgave 5 — Security
+
+Goal: protect the features from the earlier delopgaver with Spring Security and the two roles, so that what a request may do depends on who is logged in. Do this last, after the features work end-to-end — adding security to working endpoints is easier than building behind it.
+
+What the assignment actually requires (and nothing more): Spring Security with at least the roles `USER` and `ADMIN`, the role permissions below, and `POST /api/sensor-data` kept public. There is **no** requirement to store users in the database — so the users are hardcoded in memory.
+
+### Role permissions
+
+`USER` may:
+- view active alerts
+- create one citizen report per alert
+
+`ADMIN` may:
+- view raw sensor readings
+- view all alerts
+- change alert status
+- view citizen reports
+- view which readings led to an alert
+
+### Endpoint → role mapping (the actual endpoints in this project)
+
+| Method & path | Controller | Access |
+|---|---|---|
+| `POST /api/sensor-data` | `SensorDataController` | Public (no login) |
+| `GET /api/sensor-readings` | `SensorDataController` | ADMIN |
+| `GET /api/alerts/active` | `AlertController` | USER (and ADMIN) |
+| `GET /api/alerts` | `AlertController` | ADMIN |
+| `PATCH /api/alerts/{id}/status` | `AlertController` | ADMIN |
+| `GET /api/alerts/{id}/readings` | `AlertController` | ADMIN |
+| `POST /api/alerts/{id}/reports` | `CitizenReportController` | USER |
+| `GET /api/alerts/{id}/reports` | `CitizenReportController` | ADMIN |
+
+Note the shared path `/api/alerts/{id}/reports`: `POST` is USER, `GET` is ADMIN, so the security rules must match on HTTP method, not just the path. Also permit the static frontend files (`index.html`, `html/admin.html`, the css/js) so the pages load.
+
+### Public endpoint
+
+`POST /api/sensor-data` must stay public, with no login required, because the Docker container posts readings without authenticating. Everything else is role-protected.
+
+### Users — hardcoded in memory
+
+The assignment does not require users in the database, so the simplest approach is to hardcode one `USER` and one `ADMIN` directly in the security configuration using Spring's `InMemoryUserDetailsManager`. Spring then checks the submitted credentials against these two hardcoded accounts automatically. No entity, table, repository, seeder, or custom `UserDetailsService` is needed. Hashing the hardcoded passwords with a `BCryptPasswordEncoder` is good practice and easy to add, but the assignment does not require it — just avoid `{noop}` plaintext where you can.
+
+### How it fits the existing code
+
+No business rules change here — this delopgave wraps the existing controllers. `spring-boot-starter-security` is not yet in `pom.xml`, so add it first. Then add one security configuration class that declares the two in-memory users, maps each endpoint to the role above, keeps `POST /api/sensor-data` and the static files open, and (for a REST API) disables CSRF and enables HTTP Basic. The two frontend pages already line up with the roles (`index.html` for USER, `html/admin.html` for ADMIN).
+
+Done when: `POST /api/sensor-data` works without login, USER and ADMIN can each reach only their permitted endpoints, and admin-only endpoints reject a USER (403).
+
+### Simplest version that satisfies the requirements
+
+The exam rewards a working, role-protected API over a fancy login flow. The least-code path that still meets every requirement:
+
+1. **Add the dependency.** Put `spring-boot-starter-security` in `pom.xml`. On its own this locks everything — expected.
+2. **One security config class** with a single `SecurityFilterChain` bean:
+    - disable CSRF (this is a stateless REST API, and CSRF on would block the container's POST);
+    - enable **HTTP Basic** — the simplest mechanism, no login page, sessions, or tokens to build;
+    - `permitAll` on `POST /api/sensor-data` and the static files;
+    - require `ADMIN` on the admin rows from the table above;
+    - require `USER` (or authenticated) on `GET /api/alerts/active` and `POST /api/alerts/{id}/reports`.
+3. **Hardcode the two users.** Declare an `InMemoryUserDetailsManager` bean with `user` (role USER) and `admin` (role ADMIN).
+4. **(Optional, recommended)** expose a `BCryptPasswordEncoder` bean and encode the two passwords instead of using plaintext.
+
+That is enough to demonstrate the whole requirement. You can verify role protection directly in Postman/curl by setting Basic-Auth credentials, without changing the frontend at all. If you want the pages themselves to authenticate, the smallest addition is to send an `Authorization: Basic ...` header from the frontend `fetch` calls using credentials the user types once — but this is optional for passing the requirement.
+
+Unit-test the security as a central rule: the public POST succeeds anonymously, an admin endpoint returns 401/403 for an anonymous or USER caller, and a USER can submit a report.
+
 ## Frontend
 
 Keep the frontend minimal: **two HTML pages**, one per role. This matches the delopgave 5 roles one-to-one, so features are split by which page they live on instead of hiding/showing elements with role checks in JavaScript — less code overall. A single page is possible but would need more JS to toggle admin controls by role, so two pages is the simpler path.
@@ -264,6 +329,7 @@ Keeping it minimal:
 
 - `index.html`: one list of active alerts. Each item shows epicenter, magnitude, report count, and a small form (intensity input + submit button) that POSTs a citizen report.
 - `admin.html`: one list of all alerts. Each item shows the status plus status buttons (render only the transitions allowed for the current status: `UNDER_REVIEW → ACTIVE/FALSE_ALARM`, `ACTIVE → NOT_ACTIVE`), and two expandable sections — "reports" and "sensor readings" — fetched on click.
+- Keep the JavaScript files short, and split them so each file covers one topic or task (for example: one file for loading user alerts, one for submitting a citizen report, one for the admin alert view). A short, single-purpose file is easier to read, test, and explain than one large file that does everything. Share one `style.css`.
 - The backend enforces the status transition rules (source of truth); the frontend only shows the relevant buttons to avoid confusion, so the rules are not duplicated in JS.
 
 ## Testing
