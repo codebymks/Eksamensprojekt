@@ -14,15 +14,15 @@ En fuld-stack REST-webapplikation til overvågning af jordskælv. Simulerede sei
 
 # Teknologier
 
-| Lag | Teknologi |
-|-----|-----------|
-| Sprog | Java 21 |
-| Framework | Spring Boot 4.1.0 (Web MVC, Data JPA, Validation, Security) |
-| Persistens | Spring Data JPA / Hibernate, MySQL |
-| Boilerplate | Lombok |
-| Test | JUnit 5, Mockito |
-| Frontend | HTML, CSS, JavaScript |
-| Sensor-simulator | Docker (`ghcr.io/osman-butt/exam-seismic-simulator`) |
+| Lag | Teknologi                                                          |
+|-----|--------------------------------------------------------------------|
+| Sprog | Java 21                                                            |
+| Framework | Spring Boot 4.1.0 (Web MVC, Data JPA, Validation, Spring Security) |
+| Persistens | Spring Data JPA / Hibernate, MySQL                                 |
+| Boilerplate | Lombok                                                             |
+| Test | JUnit, Mockito                                                     |
+| Frontend | HTML, CSS, JavaScript                                              |
+| Sensor-simulator | Docker (`ghcr.io/osman-butt/exam-seismic-simulator`)               |
 
 ## Database
 
