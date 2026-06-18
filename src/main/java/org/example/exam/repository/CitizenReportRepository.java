@@ -4,7 +4,7 @@ import org.example.exam.model.CitizenReport;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-
+//Assignment 3
 //Spring Data JPA repository for CitizenReport.
 public interface CitizenReportRepository extends JpaRepository<CitizenReport, Integer> {
     //Finds all citizen reports submitted for one alert (used by the admin reports view).

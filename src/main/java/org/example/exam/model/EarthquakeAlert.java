@@ -45,9 +45,4 @@ public class EarthquakeAlert {
     @JsonIgnore
     @OneToMany(mappedBy = "alert")
     private List<CitizenReport> citizenReports;
-
-    //How many citizen reports this alert has received, shown to admins without fetching the full list.
-    public int getReportCount() {
-        return citizenReports.size();
-    }
 }

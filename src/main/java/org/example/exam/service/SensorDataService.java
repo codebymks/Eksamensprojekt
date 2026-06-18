@@ -36,6 +36,9 @@ public class SensorDataService {
     @Autowired
     private MagnitudeEstimator magnitudeEstimator;
 
+    @Autowired
+    private GeocodingService geocodingService;
+
     //Checks if a sensorReadingDTO is valid.
     private boolean isValid(SensorReadingDTO r) {
         //SensorLocation has latitude and longitude
@@ -91,7 +94,8 @@ public class SensorDataService {
         }
     }
 
-    //Estimates the epicenter and magnitude from exactly 3 readings and creates an UNDER_REVIEW alert linked to them; if epicenter estimation fails, no alert is created.
+    //Assignment 4
+    //Estimates the epicenter and magnitude from exactly 3 readings, reverse-geocodes the epicenter into an area name, and creates an UNDER_REVIEW alert linked to them; if epicenter estimation fails, no alert is created.
     private void tryCreateAlert(List<SensorReading> threeReadings) {
         List<EpicenterEstimator.LocationWithDistance> measurements = threeReadings.stream()
                 .map(r -> new EpicenterEstimator.LocationWithDistance(
@@ -114,6 +118,7 @@ public class SensorDataService {
         alert.setEpicenterLongitude(epicenter.longitude());
         alert.setEstimatedMagnitude(magnitude);
         alert.setAlertStatus(AlertStatus.UNDER_REVIEW);
+        alert.setArea(geocodingService.reverseGeocode(epicenter.latitude(), epicenter.longitude()));
         earthquakeAlertRepository.save(alert);
 
         for (SensorReading reading : threeReadings) {

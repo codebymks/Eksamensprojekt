@@ -209,6 +209,38 @@ Done when: a request with three valid readings produces an `UNDER_REVIEW` alert 
 5. Security: AppUser + roles, secure endpoints (USER vs ADMIN), keep
    `POST /api/sensor-data` public.
 
+## Delopgave 4 — Reverse geocoding
+
+Goal: give each alert a human-readable area derived from its epicenter coordinates. After delopgave 2 an alert only has an epicenter as numbers (e.g. latitude 55.638, longitude 11.142), which means little to a user or admin. Reverse geocoding turns coordinates into a place name — a city, region, or country. (Ordinary geocoding goes the other way: from an address to coordinates.)
+
+The system must be able to:
+- determine a geographic area for an alert from the epicenter's coordinates
+- use an external API to look the area up
+- store the result on the alert (the `area` field that was empty until now)
+- allow the external provider to be swapped for another
+### Look up the area
+
+When an alert's epicenter has been calculated, call an external reverse-geocoding API with the epicenter's latitude and longitude and read a place name from the response. The suggested provider is OpenStreetMap's Nominatim:
+
+```
+GET https://nominatim.openstreetmap.org/reverse?format=json&lat=55.6761&lon=12.5683
+```
+
+The response is JSON; pull out a usable area string — for example `display_name`, or specific fields under `address` (city, region, country) — and store it as the alert's `area`.
+
+### Make it swappable
+
+As with the epicenter and magnitude calculations in delopgave 2, the provider must be replaceable. Put the lookup behind a `GeocodingService` interface with a Nominatim implementation, and depend on the interface, not on OpenStreetMap directly. Switching to a different provider later then means writing a new implementation without touching the alert logic.
+
+### Where it fits in the flow
+
+Delopgave 2 creates the alert with an epicenter and magnitude. Delopgave 4 extends alert creation so the system also calls `GeocodingService` with the epicenter coordinates and sets `area` on the alert before it is saved.
+
+### Practical notes
+
+- Nominatim has a usage policy: at most one request per second and an identifying User-Agent/Referer header on the request.
+- The call can fail or be slow. Handle it gracefully — for example leave `area` empty if the lookup fails rather than letting the whole alert creation fail.
+  Done when: a newly created alert has its `area` populated from the epicenter coordinates via the `GeocodingService` interface, and the provider can be swapped without changing the alert-creation code.
 ## Frontend
 
 Keep the frontend minimal: **two HTML pages**, one per role. This matches the delopgave 5 roles one-to-one, so features are split by which page they live on instead of hiding/showing elements with role checks in JavaScript — less code overall. A single page is possible but would need more JS to toggle admin controls by role, so two pages is the simpler path.
