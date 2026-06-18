@@ -1,23 +1,19 @@
 package org.example.exam.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-//Tells the frontend who just logged in, so it knows whether to show the user or admin page.
 @RestController
 public class LoginController {
 
+    //Checks whether the logged-in user has the ADMIN or USER role and sends it back so the frontend knows which page to show.
     @GetMapping("/api/login")
-    public ResponseEntity<Map<String, String>> login(Authentication authentication) {
-        String role = authentication.getAuthorities().stream()
-                .findFirst()
-                .map(GrantedAuthority::getAuthority)
-                .orElse("");
+    public ResponseEntity<Map<String, String>> login(HttpServletRequest request) {
+        String role = request.isUserInRole("ADMIN") ? "ROLE_ADMIN" : "ROLE_USER";
         return ResponseEntity.ok(Map.of("role", role));
     }
 }

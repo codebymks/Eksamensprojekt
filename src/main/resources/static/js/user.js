@@ -11,12 +11,9 @@ function submitReport(event, alertId, row) {
     const input = row.querySelector(".intensity-input");
     const status = row.querySelector(".report-status");
 
-    fetch(`/api/alerts/${alertId}/reports`, {
+    authFetch(`/api/alerts/${alertId}/reports`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": sessionStorage.getItem("authHeader")
-        },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({intensity: Number(input.value)})
     })
         .then(response => {
@@ -33,9 +30,7 @@ function submitReport(event, alertId, row) {
 }
 
 //Loads active earthquake alerts from the backend and lists them in the table.
-fetch("/api/alerts/active", {
-    headers: {"Authorization": sessionStorage.getItem("authHeader")}
-})
+authFetch("/api/alerts/active")
     .then(response => response.json())
     .then(alerts => {
         const tableBody = document.getElementById("alerts-body");
@@ -74,9 +69,7 @@ fetch("/api/alerts/active", {
 function loadReportCount(row, alertId) {
     const countLabel = row.querySelector(".report-count");
 
-    fetch(`/api/alerts/${alertId}/reports`, {
-        headers: {"Authorization": sessionStorage.getItem("authHeader")}
-    })
+    authFetch(`/api/alerts/${alertId}/reports`)
         .then(response => response.json())
         .then(reports => {
             countLabel.textContent = `${reports.length} reports`;

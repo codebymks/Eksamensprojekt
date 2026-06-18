@@ -11,9 +11,7 @@ let currentAlerts = [];
 
 //Loads every alert from the backend and lists them with a button to view full details.
 function loadAlerts() {
-    return fetch("/api/alerts", {
-        headers: {"Authorization": sessionStorage.getItem("authHeader")}
-    })
+    return authFetch("/api/alerts")
         .then(response => response.json())
         .then(alerts => {
             currentAlerts = alerts;
@@ -51,19 +49,15 @@ function showAlertDetails(alertId) {
         .join(" ");
     document.getElementById("detail-actions").innerHTML = buttons || "No actions available.";
 
-    fetch(`/api/alerts/${alertId}/reports`, {
-        headers: {"Authorization": sessionStorage.getItem("authHeader")}
-    })
+    authFetch(`/api/alerts/${alertId}/reports`)
         .then(response => response.json())
         .then(reports => {
             document.getElementById("detail-reports").innerHTML = reports.length === 0
                 ? "No reports yet."
-                : reports.map(report => `<div>Report ${report.id} - intensity ${report.intensity}</div>`).join("");
+                : reports.map(report => `<div>Report ${report.id} -  intensity ${report.intensity}</div>`).join("");
         });
 
-    fetch(`/api/alerts/${alertId}/readings`, {
-        headers: {"Authorization": sessionStorage.getItem("authHeader")}
-    })
+    authFetch(`/api/alerts/${alertId}/readings`)
         .then(response => response.json())
         .then(readings => {
             document.getElementById("readings-body").innerHTML = readings.map(reading => `
@@ -91,12 +85,9 @@ document.addEventListener("click", event => {
     if (!status) return;
 
     const id = event.target.dataset.id;
-    fetch(`/api/alerts/${id}/status`, {
+    authFetch(`/api/alerts/${id}/status`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": sessionStorage.getItem("authHeader")
-        },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ status })
     })
         .then(loadAlerts)

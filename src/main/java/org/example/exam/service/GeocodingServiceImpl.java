@@ -9,17 +9,16 @@ import java.util.List;
 import java.util.Map;
 
 //Assignment 4
-//Looks up the area name for a location using the free Nominatim (OpenStreetMap) reverse geocoding API.
+//Looks up the area name for a location using the (OpenStreetMap) reverse geocoding API.
 @Service
-public class NominatimGeocodingServiceImpl implements GeocodingService {
+public class GeocodingServiceImpl implements GeocodingService {
 
-    //Nominatim requires a descriptive User-Agent to identify the calling app, or it may reject the request.
     private final RestClient restClient = RestClient.builder()
             .baseUrl("https://nominatim.openstreetmap.org")
             .defaultHeader("User-Agent", "SeismicMonitor/1.0")
             .build();
 
-    //Calls Nominatim's reverse endpoint and picks the most specific address field as the area name; returns null if the lookup fails or finds nothing.
+    //Calls url and picks the most specific address field as the area name; returns null if the lookup fails or finds nothing.
     @Override
     public String reverseGeocode(double latitude, double longitude) {
         try {
