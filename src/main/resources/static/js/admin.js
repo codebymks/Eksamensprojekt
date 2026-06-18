@@ -58,7 +58,7 @@ function showAlertDetails(alertId) {
         .then(reports => {
             document.getElementById("detail-reports").innerHTML = reports.length === 0
                 ? "No reports yet."
-                : reports.map(report => `<div>Report #${report.id}: intensity ${report.intensity}</div>`).join("");
+                : reports.map(report => `<div>Report ${report.id} - intensity ${report.intensity}</div>`).join("");
         });
 
     fetch(`/api/alerts/${alertId}/readings`, {

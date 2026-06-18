@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/alerts/*/status").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/alerts/*/readings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/alerts/*/reports").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/alerts/*/reports").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/alerts/*/reports").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 //Returns a plain 401, so the browser's own login popup never appears - only index.html form is used.

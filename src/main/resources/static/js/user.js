@@ -25,6 +25,7 @@ function submitReport(event, alertId, row) {
             }
             status.textContent = "Thanks for your report!";
             input.value = "";
+            loadReportCount(row, alertId);
         })
         .catch(() => {
             status.textContent = "Could not submit report, please try again.";
@@ -57,6 +58,7 @@ fetch("/api/alerts/active", {
                     <form class="report-form">
                         <input type="number" min="1" max="10" class="intensity-input" placeholder="Intensity on Richter Scale" required>
                         <button type="submit">Submit report</button>
+                        <span class="report-count">...</span>
                     </form>
                     <span class="report-status"></span>
                 </td>
@@ -64,5 +66,19 @@ fetch("/api/alerts/active", {
             tableBody.appendChild(row);
 
             setupReportForm(row, alert.id);
+            loadReportCount(row, alert.id);
         });
     });
+
+//Fetches how many citizen reports an alert has and shows that count next to its report button.
+function loadReportCount(row, alertId) {
+    const countLabel = row.querySelector(".report-count");
+
+    fetch(`/api/alerts/${alertId}/reports`, {
+        headers: {"Authorization": sessionStorage.getItem("authHeader")}
+    })
+        .then(response => response.json())
+        .then(reports => {
+            countLabel.textContent = `${reports.length} reports`;
+        });
+}
