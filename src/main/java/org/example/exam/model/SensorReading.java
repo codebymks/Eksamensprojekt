@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SensorReading {
+    //assignment 1
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
