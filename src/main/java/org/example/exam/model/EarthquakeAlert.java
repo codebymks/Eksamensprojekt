@@ -1,5 +1,6 @@
 package org.example.exam.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,6 +16,7 @@ import org.example.exam.enums.AlertStatus;
 
 import java.util.List;
 
+//An earthquake alert: the estimated epicenter/magnitude for a quake, plus the readings and reports linked to it.
 @Entity
 @Getter
 @Setter
@@ -34,9 +36,18 @@ public class EarthquakeAlert {
 
     private String area;
 
+    //Ignored when this alert is sent as JSON: SensorReading also links back to its alert,
+    //and serializing both directions at once would recurse forever.
+    @JsonIgnore
     @OneToMany(mappedBy = "alert")
     private List<SensorReading> sensorReadings;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "alert")
     private List<CitizenReport> citizenReports;
+
+    //How many citizen reports this alert has received, shown to admins without fetching the full list.
+    public int getReportCount() {
+        return citizenReports.size();
+    }
 }

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<h2>Alert Details</h2>
+<p id="no-alert-selected">Select an alert below to see its details.</p>
+<div id="alert-details-content" style="display:none;">
+    <p>
+        <strong>Epicenter:</strong> <span id="detail-epicenter"></span><br>
+        <strong>Magnitude:</strong> <span id="detail-magnitude"></span><br>
+        <strong>Status:</strong> <span id="detail-status"></span>
+    </p>
+
+    <h3>Sensor Readings</h3>
+    <table id="readings-table">
+        <thead>
+        <tr>
+            <th>Reading ID</th>
+            <th>Sensor ID</th>
+            <th>Sensor Latitude</th>
+            <th>Sensor Longitude</th>
+            <th>Distance to Epicenter (km)</th>
+            <th>Magnitude</th>
+            <th>Recorded At</th>
+        </tr>
+        </thead>
+        <tbody id="readings-body"></tbody>
+    </table>
+
+    <h3>Actions</h3>
+    <div id="detail-actions"></div>
+
+    <h3>Reports</h3>
+    <p id="detail-reports"></p>
+</div>
+
+<h2>All Alerts</h2>
+<table id="alerts-table">
+    <thead>
+    <tr>
+        <th>Alert ID</th>
+        <th>Epicenter Latitude</th>
+        <th>Epicenter Longitude</th>
+        <th>Magnitude</th>
+        <th>Status</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody id="alerts-body">
+    </tbody>
+</table>
+
+<dialog id="reports-dialog">
+    <div id="reports-dialog-content"></div>
+    <form method="dialog">
+        <button>Close</button>
+    </form>
+</dialog>
+
+<script src="../js/adminAlert.js"></script>
+</body>
+</html>

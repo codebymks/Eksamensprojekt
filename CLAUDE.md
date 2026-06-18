@@ -10,6 +10,7 @@ A full-stack REST web application for monitoring earthquakes. Seismic sensors (s
 
 - Backend: Spring Boot (Spring Web, Spring Data JPA, Validation)
 - Database:  MySQL
+- Security: Spring Security
 - Tests: JUnit
 - Frontend: HTML, CSS, JavaScript (talks to backend via REST, uses `fetch`)
 
@@ -207,6 +208,31 @@ Done when: a request with three valid readings produces an `UNDER_REVIEW` alert 
    `area` when an alert is created.
 5. Security: AppUser + roles, secure endpoints (USER vs ADMIN), keep
    `POST /api/sensor-data` public.
+
+## Frontend
+
+Keep the frontend minimal: **two HTML pages**, one per role. This matches the delopgave 5 roles one-to-one, so features are split by which page they live on instead of hiding/showing elements with role checks in JavaScript — less code overall. A single page is possible but would need more JS to toggle admin controls by role, so two pages is the simpler path.
+
+- `index.html` — USER page
+- `admin.html` — ADMIN page
+
+Feature placement:
+
+| Feature | Page | Role | Why |
+|---|---|---|---|
+| View active alerts | `index.html` | USER | USER may see active alerts |
+| Submit a citizen report with intensity | `index.html` | USER | USER may submit one report per alert |
+| Show report count per alert | `index.html` | USER | Natural number shown next to each active alert |
+| View all alerts | `admin.html` | ADMIN | Includes UNDER_REVIEW / FALSE_ALARM that USER does not see |
+| Change status (ACTIVE / FALSE_ALARM / NOT_ACTIVE) | `admin.html` | ADMIN | Only admin changes status (enforce transition rules) |
+| View reports for an alert | `admin.html` | ADMIN | Detailed list — admin info |
+| View the sensor readings that led to an alert | `admin.html` | ADMIN | Admin may see the raw readings behind an alert |
+
+Keeping it minimal:
+
+- `index.html`: one list of active alerts. Each item shows epicenter, magnitude, report count, and a small form (intensity input + submit button) that POSTs a citizen report.
+- `admin.html`: one list of all alerts. Each item shows the status plus status buttons (render only the transitions allowed for the current status: `UNDER_REVIEW → ACTIVE/FALSE_ALARM`, `ACTIVE → NOT_ACTIVE`), and two expandable sections — "reports" and "sensor readings" — fetched on click.
+- The backend enforces the status transition rules (source of truth); the frontend only shows the relevant buttons to avoid confusion, so the rules are not duplicated in JS.
 
 ## Testing
 

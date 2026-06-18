@@ -1,0 +1,17 @@
+/* Styles for the citizen report form shown in each alert row. */
+
+.report-form {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.intensity-input {
+    width: 70px;
+}
+
+.report-status {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.9em;
+}

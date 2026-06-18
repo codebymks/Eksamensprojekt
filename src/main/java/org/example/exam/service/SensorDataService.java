@@ -79,7 +79,7 @@ public class SensorDataService {
             reading.setEstimatedMagnitude(dto.estimatedMagnitude());
             reading.setRecordedAt(parseRecordedAt(dto.recordedAt()));
             reading.setSensor(sensor);
-            validReadings.add(sensorReadingRepository.save(reading));
+            sensorReadingRepository.save(reading);
 
             if (isValid(dto)) {
                 validReadings.add(reading);
