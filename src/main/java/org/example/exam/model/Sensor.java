@@ -21,7 +21,7 @@ public class Sensor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(unique = true)
+    @Column(name = "sensor_id", unique = true)
     private String sensorID;
 
     private double latitude;
