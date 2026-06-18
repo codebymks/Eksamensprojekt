@@ -17,7 +17,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-//Assigment 1
+//Assignment 1
+//Receives sensor readings, saves them, and creates an alert when exactly 3 valid readings arrive together.
 @Service
 public class SensorDataService {
 
@@ -39,51 +40,13 @@ public class SensorDataService {
     @Autowired
     private GeocodingService geocodingService;
 
-    //Checks if a sensorReadingDTO is valid.
-    private boolean isValid(SensorReadingDTO r) {
-        //SensorLocation has latitude and longitude
-        return r.sensorLocation() != null
-                //is over 0
-                && r.estimatedDistanceToEpicenterKm() > 0
-                && r.estimatedMagnitude() > 0
-                //is a valid date/time
-                && parseRecordedAt(r.recordedAt()) != null;
-    }
-
-    //Parses recordedAt into a LocalDateTime, or returns null if it isn't a valid date/time.
-    private LocalDateTime parseRecordedAt(String recordedAt) {
-        if (recordedAt == null) return null;
-        try {
-            return LocalDateTime.parse(recordedAt);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-    }
-
-    //Saves every valid reading, finding or creating its sensor by sensorId, then creates an alert if exactly 3 valid readings arrived in this request.
+    //Saves every valid reading, then creates an alert if exactly 3 valid readings arrived in this request.
     @Transactional
     public void receive(List<SensorReadingDTO> readings) {
         List<SensorReading> validReadings = new ArrayList<>();
 
         for (SensorReadingDTO dto : readings) {
-
-            Sensor sensor = sensorRepository.findBySensorID(dto.sensorId()).orElse(null);
-            if (sensor == null) {
-                sensor = new Sensor();
-                sensor.setSensorID(dto.sensorId());
-                sensor.setLatitude(dto.sensorLocation().latitude());
-                sensor.setLongitude(dto.sensorLocation().longitude());
-                sensor = sensorRepository.save(sensor);
-            }
-
-            SensorReading reading = new SensorReading();
-            reading.setReadingId(dto.readingId());
-            reading.setEstimatedDistanceToEpicenterKm(dto.estimatedDistanceToEpicenterKm());
-            reading.setEstimatedMagnitude(dto.estimatedMagnitude());
-            reading.setRecordedAt(parseRecordedAt(dto.recordedAt()));
-            reading.setSensor(sensor);
-            sensorReadingRepository.save(reading);
-
+            SensorReading reading = saveReading(dto);
             if (isValid(dto)) {
                 validReadings.add(reading);
             }
@@ -94,44 +57,109 @@ public class SensorDataService {
         }
     }
 
-    //Assignment 4
-    //Estimates the epicenter and magnitude from exactly 3 readings, reverse-geocodes the epicenter into an area name, and creates an UNDER_REVIEW alert linked to them; if epicenter estimation fails, no alert is created.
-    private void tryCreateAlert(List<SensorReading> threeReadings) {
-        List<EpicenterEstimator.LocationWithDistance> measurements = new ArrayList<>();
-        List<Double> magnitudes = new ArrayList<>();
-        for (SensorReading reading : threeReadings) {
-            EpicenterEstimator.Location sensorLocation = new EpicenterEstimator.Location(
-                    reading.getSensor().getLatitude(), reading.getSensor().getLongitude());
-            measurements.add(new EpicenterEstimator.LocationWithDistance(
-                    sensorLocation, reading.getEstimatedDistanceToEpicenterKm()));
-            magnitudes.add(reading.getEstimatedMagnitude());
-        }
+    //Returns all sensor readings.
+    public List<SensorReading> getAllReadings() {
+        return sensorReadingRepository.findAll();
+    }
 
-        EpicenterEstimator.Location epicenter;
+    //Checks that a reading has a location, positive distance and magnitude, and a valid date/time.
+    private boolean isValid(SensorReadingDTO dto) {
+        return dto.sensorLocation() != null
+                && dto.estimatedDistanceToEpicenterKm() > 0
+                && dto.estimatedMagnitude() > 0
+                && parseRecordedAt(dto.recordedAt()) != null;
+    }
+
+    //Saves one reading, linking it to its sensor (found by sensorId, or created if new).
+    private SensorReading saveReading(SensorReadingDTO dto) {
+        Sensor sensor = findOrCreateSensor(dto);
+
+        SensorReading reading = new SensorReading();
+        reading.setReadingId(dto.readingId());
+        reading.setEstimatedDistanceToEpicenterKm(dto.estimatedDistanceToEpicenterKm());
+        reading.setEstimatedMagnitude(dto.estimatedMagnitude());
+        reading.setRecordedAt(parseRecordedAt(dto.recordedAt()));
+        reading.setSensor(sensor);
+        return sensorReadingRepository.save(reading);
+    }
+
+    //Finds the sensor by its sensorId, or creates and saves a new one if it does not exist yet.
+    private Sensor findOrCreateSensor(SensorReadingDTO dto) {
+        Sensor existing = sensorRepository.findBySensorID(dto.sensorId()).orElse(null);
+        if (existing != null) {
+            return existing;
+        }
+        Sensor sensor = new Sensor();
+        sensor.setSensorID(dto.sensorId());
+        sensor.setLatitude(dto.sensorLocation().latitude());
+        sensor.setLongitude(dto.sensorLocation().longitude());
+        return sensorRepository.save(sensor);
+    }
+
+    //Parses recordedAt into a LocalDateTime, or returns null if it isn't a valid date/time.
+    private LocalDateTime parseRecordedAt(String recordedAt) {
+        if (recordedAt == null) {
+            return null;
+        }
         try {
-            epicenter = epicenterEstimator.estimate(measurements);
-        } catch (IllegalArgumentException e) {
+            return LocalDateTime.parse(recordedAt);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    //Estimates epicenter and magnitude from the 3 readings, looks up the area, and creates an UNDER_REVIEW alert.
+    //If epicenter estimation fails, the readings stay saved but no alert is created.
+    private void tryCreateAlert(List<SensorReading> threeReadings) {
+        EpicenterEstimator.Location epicenter = estimateEpicenter(threeReadings);
+        if (epicenter == null) {
             return;
         }
 
-        double magnitude = magnitudeEstimator.estimate(magnitudes);
+        double magnitude = estimateMagnitude(threeReadings);
+        String area = geocodingService.reverseGeocode(epicenter.latitude(), epicenter.longitude());
 
         EarthquakeAlert alert = new EarthquakeAlert();
         alert.setEpicenterLatitude(epicenter.latitude());
         alert.setEpicenterLongitude(epicenter.longitude());
         alert.setEstimatedMagnitude(magnitude);
         alert.setAlertStatus(AlertStatus.UNDER_REVIEW);
-        alert.setArea(geocodingService.reverseGeocode(epicenter.latitude(), epicenter.longitude()));
+        alert.setArea(area);
         earthquakeAlertRepository.save(alert);
 
-        for (SensorReading reading : threeReadings) {
-            reading.setAlert(alert);
-            sensorReadingRepository.save(reading);
+        linkReadingsToAlert(threeReadings, alert);
+    }
+
+    //Runs the epicenter estimator on the readings; returns null if it cannot find a stable solution.
+    private EpicenterEstimator.Location estimateEpicenter(List<SensorReading> readings) {
+        List<EpicenterEstimator.LocationWithDistance> measurements = new ArrayList<>();
+        for (SensorReading reading : readings) {
+            EpicenterEstimator.Location sensorLocation = new EpicenterEstimator.Location(
+                    reading.getSensor().getLatitude(), reading.getSensor().getLongitude());
+            measurements.add(new EpicenterEstimator.LocationWithDistance(
+                    sensorLocation, reading.getEstimatedDistanceToEpicenterKm()));
+        }
+        try {
+            return epicenterEstimator.estimate(measurements);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
-    //Returns all sensor readings.
-    public List<SensorReading> getAllReadings() {
-        return sensorReadingRepository.findAll();
+    //Combines the readings' magnitudes into a single estimated magnitude.
+    private double estimateMagnitude(List<SensorReading> readings) {
+        List<Double> magnitudes = new ArrayList<>();
+        for (SensorReading reading : readings) {
+            magnitudes.add(reading.getEstimatedMagnitude());
+        }
+        return magnitudeEstimator.estimate(magnitudes);
+    }
+
+    //Links each reading to the alert so an admin can later see which readings triggered it.
+    private void linkReadingsToAlert(List<SensorReading> readings, EarthquakeAlert alert) {
+        for (SensorReading reading : readings) {
+            reading.setAlert(alert);
+            sensorReadingRepository.save(reading);
+        }
     }
 }
