@@ -9,7 +9,7 @@ En fuld-stack REST-webapplikation til overvågning af jordskælv. Simulerede sei
 - **[model](./src/main/java/org/example/exam/model)** – JPA-entiteter.
 - **[dto](./src/main/java/org/example/exam/dto)** – request/response-objekter, så API-kontrakten holdes adskilt fra databasemodellen.
 - **[security](./src/main/java/org/example/exam/security)** – Spring Security-konfiguration.
-- **[frontend](./src/main/resources/static)** – statiske sider og JavaScript.
+- **[frontend](./src/main/resources/static)** – HTML, CSS og JavaScript.
 - **[Test](./src/test/java/org/example/exam)** - JUnit og Mockito.
 
 # Teknologier
