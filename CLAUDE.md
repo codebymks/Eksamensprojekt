@@ -4,28 +4,28 @@ Guidance for working on the SeismicMonitor 24-hour exam project.
 
 ## What this project is
 
-A full-stack REST web application for monitoring earthquakes. Seismic sensors
-(simulated by a Docker container) send raw readings. The system stores them and,
-when a single request contains exactly three valid readings, estimates an
-epicenter and magnitude and creates an earthquake alert. Users can view active
-alerts and submit reports; admins review readings and manage alert status.
+A full-stack REST web application for monitoring earthquakes. Seismic sensors (simulated by a Docker container) send raw readings. The system stores them and, when a single request contains exactly three valid readings, estimates an epicenter and magnitude and creates an earthquake alert. Users can view active alerts and submit reports; admins review readings and manage alert status.
 
 ## Tech stack
 
 - Backend: Spring Boot (Spring Web, Spring Data JPA, Validation)
-- Database:  MySQL 
-- Security: Spring Security
+- Database:  MySQL
 - Tests: JUnit
 - Frontend: HTML, CSS, JavaScript (talks to backend via REST, uses `fetch`)
 
 ## Core principle
 
-Build one feature fully through the stack (DB → REST → working button on the
-frontend) before starting the next. A working vertical slice beats many
-half-finished pages. Keep it simple — do not add features beyond the assignment. Code frontend as simple as possible, make it beginner friendly.
+Build one feature fully through the stack (DB → REST → working button on the frontend) before starting the next. A working vertical slice beats many half-finished pages. Keep it simple — do not add features beyond the assignment. Code frontend as simple as possible, make it beginner friendly.
 
-Wherever the assignment says a calculation must be swappable, hide it behind an
-interface: `EpicenterEstimator`, `MagnitudeEstimator`, `GeocodingService`.
+Wherever the assignment says a calculation must be swappable, hide it behind an interface: `EpicenterEstimator`, `MagnitudeEstimator`, `GeocodingService`.
+
+## Code conventions
+
+All code written by Claude must include an explanatory comment describing what it does:
+
+- Every class gets a short comment above the class declaration explaining its responsibility (what it is for in the system).
+- Every method gets a short comment above it explaining what the method does — its purpose, not a line-by-line restatement of the code.
+- Keep comments concise and in plain language so they are beginner friendly. Update the comment if the behavior changes.
 
 ## Model (entities)
 
@@ -37,8 +37,7 @@ Only necessary attributes are listed. Do not add extra fields.
 - `latitude`
 - `longitude`
 
-CRUD: Create (find-or-create on incoming data — never duplicate an existing
-sensor), Read (via raw readings). No update/delete.
+CRUD: Create (find-or-create on incoming data — never duplicate an existing sensor), Read (via raw readings). No update/delete.
 
 ### SensorReading
 - `id` (PK, generated)
@@ -49,8 +48,7 @@ sensor), Read (via raw readings). No update/delete.
 - `sensor` (`@ManyToOne`)
 - `alert` (`@ManyToOne`, nullable)
 
-CRUD: Create (save every valid reading, even when no alert is made), Read (list
-raw readings; readings that led to an alert). No update/delete.
+CRUD: Create (save every valid reading, even when no alert is made), Read (list raw readings; readings that led to an alert). No update/delete.
 
 ### EarthquakeAlert
 - `id` (PK)
@@ -62,17 +60,14 @@ raw readings; readings that led to an alert). No update/delete.
 - `readings` (`@OneToMany`)
 - `reports` (`@OneToMany`)
 
-CRUD: Create (auto when exactly 3 valid readings arrive; status `UNDER_REVIEW`),
-Read (active alerts, all alerts, single alert), Update (status only, enforce
-allowed transitions). No delete.
+CRUD: Create (auto when exactly 3 valid readings arrive; status `UNDER_REVIEW`), Read (active alerts, all alerts, single alert), Update (status only, enforce allowed transitions). No delete.
 
 ### CitizenReport
 - `id` (PK)
 - `intensity`
 - `alert` (`@ManyToOne`)
 
-CRUD: Create (user submits a report for an alert; one per user per alert in
-delopgave 5), Read (count per alert; reports for an alert). No update/delete.
+CRUD: Create (user submits a report for an alert; one per user per alert in delopgave 5), Read (count per alert; reports for an alert). No update/delete.
 
 ### AlertStatus (enum)
 - `UNDER_REVIEW`, `ACTIVE`, `FALSE_ALARM`, `NOT_ACTIVE`
@@ -120,6 +115,85 @@ Map to a request DTO, not directly to entities:
 ]
 ```
 
+## Delopgave 1 — Receive and store sensor data
+
+Goal: implement the part of the system that receives raw readings from the simulated sensors (the Docker container) and stores them. No alert logic yet — this delopgave is only about getting data in and being able to read it back out.
+
+The system must be able to:
+- receive `POST /api/sensor-data`
+- store sensors and sensor readings in the database
+- handle requests with 1–3 readings
+- save readings even when no earthquake alert can be created
+- expose the raw sensor readings for viewing
+
+How the pieces fit together:
+
+1. **Request DTO.** The incoming JSON is a list of reading objects. Map it to a request DTO (e.g. `SensorDataRequest` / `SensorReadingDto`) rather than binding directly to JPA entities. The DTO mirrors the JSON shape, including the nested `sensorLocation` object with `latitude` and `longitude`. This keeps the API contract separate from the database model.
+
+2. **Controller.** A `@RestController` with a `@PostMapping("/api/sensor-data")` that accepts the list of reading DTOs in the body and delegates to a service. It should accept a list of 1 to 3 readings. Return a sensible response (e.g. `200 OK`/`201 Created`); the container only needs the request to succeed.
+
+3. **Find-or-create the sensor.** Each reading carries a `sensorId` and a `sensorLocation`. Before saving a reading, look up the sensor by its `sensorId`. If it already exists, reuse it; if not, create it. Never insert a duplicate sensor for the same `sensorId`. This is the "find-or-create" rule for the `Sensor` entity.
+
+4. **Save every valid reading.** Persist each reading as a `SensorReading` linked to its sensor (`@ManyToOne`). At this stage the reading's `alert` is null — readings are stored regardless of whether they will ever lead to an alert. This is important: storage of raw data is never blocked by alert logic.
+
+5. **Read back raw readings.** Provide a `GET` endpoint to list the stored raw readings so they can be inspected. (Restricting this to admins happens later in delopgave 5; for now just make it work.)
+
+Done when: the running app accepts posts from the Docker simulator on `localhost:8080`, persists sensors and readings without duplicating sensors, and the stored readings can be listed via a `GET` endpoint.
+
+## Delopgave 2 — Create earthquake alerts
+
+Goal: when a single request contains exactly three valid readings, the system estimates an epicenter and a magnitude and creates an earthquake alert. This builds directly on delopgave 1 — the readings are still always stored; the alert is the new part.
+
+The system must be able to:
+- decide whether a request contains enough readings for an alert
+- estimate the epicenter
+- estimate the magnitude
+- create an alert with status `UNDER_REVIEW`
+- link the relevant sensor readings to the alert
+
+### Decide whether there are enough readings
+
+A single reading only gives a *distance* to the epicenter, not a *direction*. One distance describes a circle of possible epicenters around the sensor; two readings give two circles that usually cross in two points (still ambiguous); three circles intersect at a single point. That is why three readings are required to determine the epicenter's coordinates.
+
+Validity must be checked before counting to three. A reading is valid if:
+- `sensorLocation` contains both latitude and longitude
+- `estimatedDistanceToEpicenterKm > 0`
+- `estimatedMagnitude > 0`
+- `recordedAt` parses as a date/time
+
+Branching:
+- Fewer than 3 readings in the request → save the readings, create no alert (the epicenter cannot be determined unambiguously).
+- Exactly 3 valid readings → attempt to estimate epicenter and magnitude.
+
+Only readings within the same request are combined — never across requests.
+
+### Estimate the epicenter
+
+The epicenter estimation is a provided "black box" algorithm (trilateration — the point where the three circles intersect). You do not need to understand its internal math, only call it. Two things matter:
+
+- **It can fail.** For certain geometries (for example three points that are effectively collinear) the algorithm cannot produce a stable solution and throws. The rule is: if epicenter estimation fails, still save the readings but create no alert. So this call must be wrapped so a failure does not abort storing the readings and does not crash the whole request.
+- **It must be swappable.** The solution should allow switching to a different calculation method without changing the calling code. Put the calculation behind an `EpicenterEstimator` interface and depend on the interface, not a concrete implementation.
+
+The algorithm works on the three readings' sensor locations plus each reading's `estimatedDistanceToEpicenterKm`, and returns the estimated epicenter latitude and longitude.
+
+### Estimate the magnitude
+
+Combine the three readings' `estimatedMagnitude` values. A simple average is sufficient; a weighted average (readings closer to the epicenter weigh more) is an allowed alternative. Put this behind a `MagnitudeEstimator` interface for the same swap-without-changing-callers reason as the epicenter estimator.
+
+### Create the alert with status UNDER_REVIEW
+
+A new alert never starts visible or active. It is created with status `UNDER_REVIEW` because an admin must review it first. Store the estimated epicenter latitude/longitude and the estimated magnitude on the `EarthquakeAlert`. The status transitions (review, false alarm, etc.) are implemented in delopgave 3; here it is enough that the alert is created in the `UNDER_REVIEW` state.
+
+### Link the relevant readings to the alert
+
+For traceability, an admin must later be able to see exactly which three readings triggered an alert. So the alert keeps a relation to the readings that went into its calculation: set each of the three readings' `alert` reference (`@ManyToOne`) to the new alert, matching the alert's `readings` (`@OneToMany`). You store not only the result (epicenter + magnitude) but also the link back to the data behind it.
+
+### Flow in one POST /api/sensor-data
+
+Parse the list → validate each reading → save the readings (always) → if exactly 3 valid readings: try to estimate the epicenter (catch failure) → estimate the magnitude → create `EarthquakeAlert(status = UNDER_REVIEW, epicenter, magnitude)` → link the 3 readings to the alert. If fewer than 3 valid readings, or estimation fails: stop after saving the readings.
+
+Done when: a request with three valid readings produces an `UNDER_REVIEW` alert with an estimated epicenter and magnitude and the three readings linked to it, while requests with fewer than three valid readings — or where estimation fails — still store their readings and create no alert.
+
 ## Implementation order (delopgaver)
 
 1. Receive & store sensor data: entities Sensor + SensorReading, repositories,
@@ -136,14 +210,11 @@ Map to a request DTO, not directly to entities:
 
 ## Testing
 
-Unit-test the central business rules: validation, the 3-valid-readings →
-alert rule, "estimation fails → readings saved, no alert", and the status
-transition rules.
+Unit-test the central business rules: validation, the 3-valid-readings → alert rule, "estimation fails → readings saved, no alert", and the status transition rules.
 
 ## Public endpoint
 
-`POST /api/sensor-data` must stay public so the Docker container can post
-without logging in. Everything else is role-protected once delopgave 5 is done.
+`POST /api/sensor-data` must stay public so the Docker container can post without logging in. Everything else is role-protected once delopgave 5 is done.
 
 ## Running the sensor simulator
 
