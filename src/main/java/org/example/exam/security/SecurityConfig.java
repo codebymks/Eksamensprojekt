@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/sensor-data").permitAll()
-                        .requestMatchers("/", "/index.html", "/user.html", "/html/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/html/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/api/login").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/sensor-readings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/alerts/active").hasAnyRole("USER", "ADMIN")
