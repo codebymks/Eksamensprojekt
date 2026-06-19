@@ -7,6 +7,7 @@
 </head>
 <body>
 
+<!--Table of all alerts (filled in by admin.js)-->
 <h1>All Alerts</h1>
 <table id="alerts-table">
     <thead>
@@ -23,7 +24,10 @@
     </tbody>
 </table>
 
+<!--Pop-up dialog with the details of one alert (opens when "Details" is clicked)-->
 <dialog id="alert-details-dialog">
+
+    <!--Info about the alert-->
     <h2>Alert Details</h2>
     <p>
         <strong>Epicenter:</strong> <span id="detail-epicenter"></span><br>
@@ -31,6 +35,7 @@
         <strong>Status:</strong> <span id="detail-status"></span>
     </p>
 
+    <!--The sensor readings-->
     <h3>Sensor Readings</h3>
     <table id="readings-table">
         <thead>
@@ -47,12 +52,15 @@
         <tbody id="readings-body"></tbody>
     </table>
 
+    <!--Buttons to change the alert's status-->
     <h3>Actions</h3>
     <div id="detail-actions"></div>
 
+    <!--Citizen reports submitted for this alert-->
     <h3>Reports</h3>
     <p id="detail-reports"></p>
 
+    <!--Close the pop-up-->
     <form method="dialog">
         <button>Close</button>
     </form>
