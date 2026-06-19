@@ -44,14 +44,11 @@ button {
     padding: 6px 14px;
     border-radius: 4px;
     cursor: pointer;
+    margin-left: 8px;
 }
 
 button:hover {
     background-color: #2c5269;
-}
-
-button + button {
-    margin-left: 8px;
 }
 
 #alert-details-dialog {
