@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+//Assignment 5
 @RestController
 public class LoginController {
 

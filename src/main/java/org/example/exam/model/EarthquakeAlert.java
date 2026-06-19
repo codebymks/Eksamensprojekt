@@ -20,6 +20,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class EarthquakeAlert {
+    //Assignment 2
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

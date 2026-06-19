@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClientException;
 @Service
 public class GeocodingServiceImpl implements GeocodingService {
 
-    //Connection to the Nominatim API. The User-Agent header is required by their usage policy.
+    //Connection to the API. The User-Agent header is required by their usage policy.
     private final RestClient restClient = RestClient.builder()
             .baseUrl("https://nominatim.openstreetmap.org")
             .defaultHeader("User-Agent", "SeismicMonitor/1.0")

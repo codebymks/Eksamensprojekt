@@ -8,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 //Assignment 1
+//SHow sensor data and sensor reading data for both admin and user.
 @RestController
 @RequestMapping("/api")
 public class SensorDataController {

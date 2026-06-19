@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 //Assignment 3
-//Earthquake alerts for the frontend to read and (for admins) update.
+//Both admin and user can see alerts, admin can update alert status.
 @RestController
 @RequestMapping("/api/alerts")
 public class AlertController {
