@@ -32,6 +32,8 @@ class SensorDataServiceTest {
     private EpicenterEstimator epicenterEstimator;
     @Mock
     private MagnitudeEstimator magnitudeEstimator;
+    @Mock
+    private GeocodingService geocodingService;
 
     @InjectMocks
     private SensorDataService sensorDataService;
