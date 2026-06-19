@@ -26,7 +26,7 @@ function addAlertRow(tableBody, alert) {
         <td>${alert.area ?? "-"}</td>
         <td>
             <form class="report-form">
-                <input type="number" min="1" max="10" class="intensity-input" placeholder="Intensity on Richter Scale" required>
+                <input type="number" min="1" max="10" class="intensity-input" placeholder="Intensity" required>
                 <button type="submit">Submit report</button>
                 <span class="report-count">...</span>
             </form>
