@@ -74,7 +74,7 @@ function showAlertDetails(alertId) {
         });
 }
 
-//Handles clicks anywhere on the page: viewing an alert's details or ch anging its status.
+//Handles clicks anywhere on the page: viewing an alert's details or changing its status.
 document.addEventListener("click", event => {
     if (event.target.classList.contains("show-details")) {
         showAlertDetails(event.target.dataset.id);
